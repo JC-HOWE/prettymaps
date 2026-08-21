@@ -20,25 +20,42 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+          cache: pip
 
       - name: Install package and dependencies
         run: |
-          pip install -e .
-          pip install pytest
+          python -m pip install -e .
+          python -m pip install pytest
 
       - name: Run tests with pytest
-        run: pytest --junitxml=pytest-results.xml tests
+        run: python -m pytest --junitxml=pytest-results.xml tests
 
       - name: Upload pytest results
         uses: actions/upload-artifact@v4
         with:
           name: pytest-results
-          path: pytest-results.xml 
+          path: pytest-results.xml
+
+  windows-smoke:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install this fork in editable mode
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install -e .
+          python -m pip install pytest
+
+      - name: Verify imports
+        run: python -c "import prettymaps, streamlit; print('Windows import smoke test passed')"
+
+      - name: Verify Streamlit app starts
+        run: python -m pytest -q tests/test_app_runs.py

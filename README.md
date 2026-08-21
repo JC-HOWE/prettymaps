@@ -4,10 +4,9 @@ A minimal Python library to draw customized maps from [OpenStreetMap](https://ww
 
 ![](https://github.com/marceloprates/prettymaps/raw/main/pictures/heerhugowaard.png)
 
-# [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue?logo=github)](https://marceloprates.github.io/prettymaps/) [![PyPI](https://img.shields.io/pypi/v/prettymaps)](https://pypi.org/project/prettymaps/) [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/) [![License](https://img.shields.io/badge/license-AGPL%20v3.0-green)](LICENSE)
+# [![Docs](https://img.shields.io/badge/docs-GitHub%20Pages-blue?logo=github)](https://marceloprates.github.io/prettymaps/) [![PyPI](https://img.shields.io/pypi/v/prettymaps)](https://pypi.org/project/prettymaps/) [![Python](https://img.shields.io/badge/python-3.12%2B-blue)](https://www.python.org/) [![License](https://img.shields.io/badge/license-AGPL%20v3.0-green)](LICENSE)
 
-
-This work is [licensed](LICENSE) under a GNU Affero General Public License v3.0 (you can make commercial use, distribute and modify this project, but must **disclose** the source code with the license and copyright notice)
+This work is [licensed](LICENSE) under the GNU Affero General Public License v3.0. Commercial use is permitted subject to the license conditions. This fork also contains a practical commercial-print and OpenStreetMap attribution checklist in [`LEGAL.md`](LEGAL.md).
 
 ## Note about crediting and NFTs:
 - Please keep the printed message on the figures crediting my repository and OpenStreetMap ([mandatory by their license](https://www.openstreetmap.org/copyright)).
@@ -25,14 +24,41 @@ This work is [licensed](LICENSE) under a GNU Affero General Public License v3.0 
 
 # Installation
 
-### Install locally:
+## Windows Native (PowerShell, recommended for this fork)
+
+This fork targets Python **3.12+**. The local virtual environment is intentionally ignored by Git and must be created on each machine.
+
+```powershell
+git clone https://github.com/JC-HOWE/prettymaps.git
+cd prettymaps
+.\setup_windows.ps1
+.\run_windows.ps1
+```
+
+The setup script creates `.venv`, upgrades the packaging tools, and installs this fork in editable mode. The run script starts Streamlit with `.venv\Scripts\python.exe`, so activating the virtual environment is not required.
+
+If PowerShell policy blocks local scripts, the same setup can be performed without activation:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip setuptools wheel
+.\.venv\Scripts\python.exe -m pip install -e .
+.\.venv\Scripts\python.exe -m streamlit run app.py
+```
+
+The Streamlit app now writes generated PNG/SVG files to the operating system's temporary directory rather than assuming Linux `/tmp`, so the same code path works on Windows, Linux, and macOS.
+
+### Install the published package locally
+
 Install prettymaps with:
 
 ```
 pip install prettymaps
 ```
 
-### Install on Google Colaboratory:
+If you want to work on this fork's source code, prefer `pip install -e .` from the cloned repository instead of the published PyPI package.
+
+### Install on Google Colaboratory
 
 Install prettymaps with:
 
@@ -40,14 +66,18 @@ Install prettymaps with:
 !pip install -e "git+https://github.com/marceloprates/prettymaps#egg=prettymaps"
 ```
 
-Then **restart the runtime** (Runtime -> Restart Runtime) before importing prettymaps
+Then **restart the runtime** (Runtime -> Restart Runtime) before importing prettymaps.
 
 # Run front-end
 
-After prettymaps is installed, you can run the front-end (streamlit) application from the prettymaps repository using:
+After prettymaps is installed, you can run the front-end (Streamlit) application from the prettymaps repository using:
+
 ```
 streamlit run app.py
 ```
+
+The app exports PNG and SVG files and includes OpenStreetMap plus prettymaps attribution in generated artwork. Before selling or distributing printed maps, read [`LEGAL.md`](LEGAL.md), especially the requirements for point-of-sale, packaging, and on-item OSM attribution.
+
 # Tutorial
 
 The full tutorial is at **[docs/tutorial.md](docs/tutorial.md)** — a markdown walkthrough with rendered images, the `[Plot]` dataclass fields, the `layers`/`style` parameters, presets, multiplot, hillshade, and keypoints.
@@ -68,6 +98,8 @@ plot = prettymaps.plot('Stad van de Zon, Heerhugowaard, Netherlands')
 | Interactive marimo notebook (runnable) | [`notebooks/tutorial.py`](notebooks/tutorial.py) |
 | Open in Google Colab | [Open in Colab](https://colab.research.google.com/github/marceloprates/prettymaps/blob/master/notebooks/tutorial.py) |
 | Streamlit front-end | `streamlit run app.py` |
+| Windows setup | [`setup_windows.ps1`](setup_windows.ps1) |
+| Commercial-use / attribution baseline | [`LEGAL.md`](LEGAL.md) |
 
 ### Run the tutorial locally (marimo)
 
@@ -109,4 +141,3 @@ plot = prettymaps.plot(
 ![Macau, custom parameters](docs/img/tour-03-macau-custom.png)
 
 See [`docs/tutorial.md`](docs/tutorial.md) for the full set of examples (Macau, Bom Fim, mosaic, Barcelona plotter, Tijuca, multiplot, hillshade, Garopaba keypoints).
-

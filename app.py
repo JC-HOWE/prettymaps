@@ -21,10 +21,10 @@ PRINT_CREDIT = {
 }
 
 
-def download_svg():
+def download_svg(fig):
     """Create an additional map in SVG format."""
     fig_path = APP_TEMP_DIR / "generated_map_download.svg"
-    plt.savefig(fig_path, format="svg", bbox_inches="tight", dpi=150)
+    fig.savefig(fig_path, format="svg", bbox_inches="tight")
     return fig_path
 
 
@@ -79,7 +79,7 @@ with cols[0]:
 
     custom_palette = {}
     color_cols = st.columns(len(palette))
-    for i in range(len(palette) // 1):  # Calculate the number of rows needed
+    for i in range(len(palette) // 1):
         for j, col in enumerate(color_cols):
             idx = i * 4 + j
             if idx < num_colors:
@@ -172,8 +172,8 @@ with cols[1]:
             else {}
         )
         with st.spinner("Generating map..."):
-            fig, ax = plt.subplots(figsize=(width, height), dpi=300)
-            prettymaps.plot(
+            fig, ax = plt.subplots(figsize=(width, height), dpi=dpi)
+            map_plot = prettymaps.plot(
                 query,
                 radius=1000 * radius,
                 circle=circular,
@@ -182,11 +182,13 @@ with cols[1]:
                 figsize=(width, height),
                 preset=selected_preset,
                 show=False,
+                fig=fig,
                 ax=ax,
                 credit=PRINT_CREDIT,
             )
+
             buf = io.BytesIO()
-            plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
+            map_plot.fig.savefig(buf, format="png", bbox_inches="tight", dpi=dpi)
             buf.seek(0)
             st.session_state.last_image = buf
 
@@ -194,8 +196,8 @@ with cols[1]:
             fig_path = APP_TEMP_DIR / "generated_map.png"
             fig_path.write_bytes(st.session_state.last_image.getbuffer())
 
-            # Save SVG for persistent download
-            svg_path = download_svg()
+            # Save SVG for persistent download.
+            svg_path = download_svg(map_plot.fig)
             st.session_state.last_png_path = fig_path
             st.session_state.last_svg_path = svg_path
 

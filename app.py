@@ -1,16 +1,29 @@
-import streamlit as st
-import logging
-from matplotlib import pyplot as plt
-import sys
-import os
 import io
+import logging
+from pathlib import Path
+import sys
+import tempfile
+
+import streamlit as st
+from matplotlib import pyplot as plt
+
+
+APP_TEMP_DIR = Path(tempfile.gettempdir()) / "prettymaps"
+APP_TEMP_DIR.mkdir(parents=True, exist_ok=True)
+
+PRINT_CREDIT = {
+    "text": "\n".join(
+        [
+            "Map data © OpenStreetMap contributors — openstreetmap.org/copyright",
+            "Rendered with prettymaps — github.com/marceloprates/prettymaps",
+        ]
+    )
+}
 
 
 def download_svg():
-    """
-    Creates additional map in SVG format
-    """
-    fig_path = "/tmp/generated_map_download.svg"
+    """Create an additional map in SVG format."""
+    fig_path = APP_TEMP_DIR / "generated_map_download.svg"
     plt.savefig(fig_path, format="svg", bbox_inches="tight", dpi=150)
     return fig_path
 
@@ -19,7 +32,7 @@ def download_svg():
 st.set_page_config(layout="wide")
 
 # Add repo root to sys.path
-sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import prettymaps
 
 # Initialize session state for last_image
@@ -34,6 +47,10 @@ presets = prettymaps.presets().to_dict()
 
 # Set the title of the app
 st.title("prettymaps")
+st.caption(
+    "Exports retain OpenStreetMap and prettymaps attribution. "
+    "See LEGAL.md before commercial distribution."
+)
 
 cols = st.columns([1, 2])
 with cols[0]:
@@ -105,7 +122,6 @@ with cols[0]:
         "building": st.checkbox("Buildings", value="building" in style),
         "streets": st.checkbox("Streets", value="streets" in style),
         "waterway": st.checkbox("Waterway", value="waterway" in style),
-        "building": st.checkbox("Building", value="building" in style),
         "water": st.checkbox("Water", value="water" in style),
         "sea": st.checkbox("Sea", value="sea" in style),
         "forest": st.checkbox("Forest", value="forest" in style),
@@ -161,22 +177,22 @@ with cols[1]:
                 query,
                 radius=1000 * radius,
                 circle=circular,
-                layers={k: (False if v == False else {}) for k, v in layers.items()},
+                layers={k: (False if v is False else {}) for k, v in layers.items()},
                 style={"building": {"palette": list(custom_palette.values())}},
                 figsize=(width, height),
                 preset=selected_preset,
                 show=False,
                 ax=ax,
+                credit=PRINT_CREDIT,
             )
             buf = io.BytesIO()
             plt.savefig(buf, format="png", bbox_inches="tight", dpi=150)
             buf.seek(0)
             st.session_state.last_image = buf
 
-            # Save the figure to a file
-            fig_path = "/tmp/generated_map.png"
-            with open(fig_path, "wb") as f:
-                f.write(st.session_state.last_image.getbuffer())
+            # Save the figure to an OS-native temporary directory.
+            fig_path = APP_TEMP_DIR / "generated_map.png"
+            fig_path.write_bytes(st.session_state.last_image.getbuffer())
 
             # Save SVG for persistent download
             svg_path = download_svg()
@@ -184,17 +200,16 @@ with cols[1]:
             st.session_state.last_svg_path = svg_path
 
     # Always show download buttons (disabled if no image)
-    png_ready = "last_png_path" in st.session_state and os.path.exists(
-        st.session_state["last_png_path"]
-    )
-    svg_ready = "last_svg_path" in st.session_state and os.path.exists(
-        st.session_state["last_svg_path"]
-    )
+    png_path = st.session_state.get("last_png_path")
+    svg_path = st.session_state.get("last_svg_path")
+    png_ready = bool(png_path and Path(png_path).exists())
+    svg_ready = bool(svg_path and Path(svg_path).exists())
+
     btn_cols = st.columns(2)
     with btn_cols[0]:
         st.download_button(
             label="Download PNG",
-            data=open(st.session_state["last_png_path"], "rb") if png_ready else b"",
+            data=Path(png_path).read_bytes() if png_ready else b"",
             file_name=f"{query}.png",
             mime="image/png",
             use_container_width=True,
@@ -203,7 +218,7 @@ with cols[1]:
     with btn_cols[1]:
         st.download_button(
             label="Download SVG",
-            data=open(st.session_state["last_svg_path"], "rb") if svg_ready else b"",
+            data=Path(svg_path).read_bytes() if svg_ready else b"",
             file_name=f"{query}.svg",
             mime="image/svg",
             use_container_width=True,
